@@ -39,36 +39,19 @@ import numpy as np
 import math
 
 
-class Controller:
-    def __init__(self, params, array_dim=100,minitaur=True):
+class OpenLoopController:
+    ''' 
+        Implement an open-loop controller based on periodic signals
+        Please see the supplementary information of Cully et al., Nature, 2015
+    '''
+    def __init__(self, params, array_dim=100):
         self.array_dim = array_dim
-        if(minitaur):
-            self.trajs = self._compute_minitaur_trajs(params, array_dim)
-        else:
-            self.trajs = self._compute_trajs(params, array_dim)
+        self.trajs = np.zeros(1)
 
-    def step(self, t):
-        k = int(math.floor(t * self.array_dim)) % self.array_dim
+    def step(self, simu):
+        assert(self.trajs.shape[0] != 1)
+        k = int(math.floor(simu.t * self.array_dim)) % self.array_dim
         return self.trajs[:, k]
-
-    def _compute_trajs(self, p, array_dim):
-        trajs = np.zeros((6 * 3, array_dim))
-        k = 0
-        for i in range(0, 36, 6):
-            trajs[k,:] =  0.5 * self._control_signal(p[i], p[i + 1], p[i + 2], array_dim)
-            trajs[k+1,:] = self._control_signal(p[i + 3], p[i + 4], p[i + 5], array_dim)
-            trajs[k+2,:] = trajs[k+1,:]
-            k += 3
-        return trajs * math.pi / 4.0
-
-    def _compute_minitaur_trajs(self, p, array_dim):
-        trajs = np.zeros((8, array_dim))
-        k = 0
-        for i in range(0, 4*3*2, 6):
-            trajs[k,:] = self._control_signal(p[i], p[i + 1], p[i + 2], array_dim)
-            trajs[k+1,:] = self._control_signal(p[i + 3], p[i + 4], p[i + 5], array_dim)
-            k += 2
-        return trajs
 
     def _control_signal(self, amplitude, phase, duty_cycle, array_dim=100):
         '''
